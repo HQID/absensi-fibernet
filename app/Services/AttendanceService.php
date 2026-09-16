@@ -34,6 +34,12 @@ class AttendanceService
             throw new \Exception($validation['message']);
         }
 
+        // Block if after 17:00
+        $closingTime = Carbon::today()->setHour(17)->setMinute(0)->setSecond(0);
+        if (now()->greaterThan($closingTime)) {
+            throw new \Exception('Batas waktu presensi hari ini telah berakhir (Pukul 17:00). Anda tercatat sebagai Alpa/Tidak Hadir.');
+        }
+
         // Check if already checked in today
         $today = Carbon::today();
         $attendance = Attendance::where('student_id', $student->id)
@@ -109,8 +115,8 @@ class AttendanceService
      */
     protected function determineStatus(\Carbon\CarbonInterface $time): string
     {
-        // Example configuration: <= 08:00 Present, > 08:00 Late
-        $limit = Carbon::today()->setHour(8)->setMinute(0)->setSecond(0);
+        // 08:00 - 09:00 is Present, after 09:00 is Late
+        $limit = Carbon::today()->setHour(9)->setMinute(0)->setSecond(0);
         
         return $time->lte($limit) ? 'present' : 'late';
     }

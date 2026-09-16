@@ -3,6 +3,9 @@
         <flux:navlist aria-label="{{ __('Pengaturan') }}">
             <flux:navlist.item :href="route('profile.edit')" wire:navigate>{{ __('Profil') }}</flux:navlist.item>
             <flux:navlist.item :href="route('security.edit')" wire:navigate>{{ __('Keamanan') }}</flux:navlist.item>
+            @if(auth()->user()->isAdmin())
+            <flux:navlist.item :href="route('geofence.edit')" wire:navigate>{{ __('Lokasi Kantor') }}</flux:navlist.item>
+            @endif
         </flux:navlist>
     </div>
 

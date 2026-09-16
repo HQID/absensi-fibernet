@@ -9,7 +9,7 @@ use Carbon\Carbon;
 
 new class extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, \Livewire\WithPagination;
 
     public $latitude;
     public $longitude;
@@ -23,6 +23,20 @@ new class extends Component
     public function mount()
     {
         $this->loadAttendance();
+    }
+
+    public function with(): array
+    {
+        $history = [];
+        if (Auth::user()->isStudent() && Auth::user()->student) {
+            $history = Attendance::where('student_id', Auth::user()->student->id)
+                ->orderBy('attendance_date', 'desc')
+                ->paginate(5);
+        }
+
+        return [
+            'history' => $history,
+        ];
     }
 
     public function loadAttendance()
@@ -240,5 +254,70 @@ new class extends Component
             </div>
         @endif
     </div>
+
+    @if(Auth::user()->isStudent() && Auth::user()->student)
+    <div class="mt-8 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
+        <div class="px-6 py-5 border-b border-gray-200">
+            <h3 class="text-lg font-medium leading-6 text-gray-900">Riwayat Presensi Saya</h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-gray-500">
+                <thead class="bg-gray-50 text-xs uppercase text-gray-700 border-b border-gray-200">
+                    <tr>
+                        <th scope="col" class="px-6 py-3">Tanggal</th>
+                        <th scope="col" class="px-6 py-3">Check In</th>
+                        <th scope="col" class="px-6 py-3">Check Out</th>
+                        <th scope="col" class="px-6 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                    @forelse($history as $record)
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-medium text-gray-900">{{ $record->attendance_date->format('d M Y') }}</div>
+                                <div class="text-xs text-gray-500">{{ $record->attendance_date->translatedFormat('l') }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($record->check_in_at)
+                                    <div class="text-gray-900">{{ $record->check_in_at->format('H:i') }}</div>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($record->check_out_at)
+                                    <div class="text-gray-900">{{ $record->check_out_at->format('H:i') }}</div>
+                                @else
+                                    <span class="text-gray-400">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($record->status === 'present')
+                                    <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 uppercase">HADIR</span>
+                                @elseif($record->status === 'late')
+                                    <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20 uppercase">TERLAMBAT</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/10 uppercase">ABSEN</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-12 text-center text-sm text-gray-500">
+                                Anda belum memiliki riwayat presensi.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        
+        @if($history && method_exists($history, 'hasPages') && $history->hasPages())
+        <div class="border-t border-gray-200 px-6 py-4">
+            {{ $history->links() }}
+        </div>
+        @endif
+    </div>
+    @endif
 </div>
 

@@ -59,6 +59,7 @@
                             <th scope="col" class="px-6 py-3">Check Out</th>
                             <th scope="col" class="px-6 py-3">Status</th>
                             <th scope="col" class="px-6 py-3">Jarak</th>
+                            <th scope="col" class="px-6 py-3 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white">
@@ -98,10 +99,13 @@
                                 <td class="px-6 py-4 text-gray-500">
                                     {{ $attendance->check_in_distance ? $attendance->check_in_distance . ' m' : '-' }}
                                 </td>
+                                <td class="px-6 py-4 text-right font-medium">
+                                    <a href="{{ route('reports.show', $attendance->id) }}" class="text-blue-600 hover:text-blue-900" wire:navigate>Detail</a>
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-500">
+                                <td colspan="7" class="px-6 py-12 text-center text-sm text-gray-500">
                                     Tidak ada data presensi yang ditemukan.
                                 </td>
                             </tr>
