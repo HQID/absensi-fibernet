@@ -107,7 +107,7 @@ class AttendanceService
     /**
      * Determine attendance status based on time
      */
-    protected function determineStatus(Carbon $time): string
+    protected function determineStatus(\Carbon\CarbonInterface $time): string
     {
         // Example configuration: <= 08:00 Present, > 08:00 Late
         $limit = Carbon::today()->setHour(8)->setMinute(0)->setSecond(0);
