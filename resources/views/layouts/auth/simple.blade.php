@@ -3,8 +3,8 @@
     <head>
         @include('partials.head')
     </head>
-    <body class="min-h-screen bg-zinc-50 antialiased">
-        <div class="bg-zinc-50 flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
+    <body class="min-h-screen fibernet-auth-bg antialiased">
+        <div class="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
             <div class="flex w-full max-w-sm flex-col gap-2">
                 <a href="{{ route('home') }}" class="flex flex-col items-center gap-2 font-medium" wire:navigate>
                     <span class="flex h-20 mb-4 items-center justify-center">
@@ -12,7 +12,7 @@
                     </span>
                     <span class="sr-only">{{ config('app.name', 'Laravel') }}</span>
                 </a>
-                <div class="flex flex-col gap-6">
+                <div class="flex flex-col gap-6 rounded-2xl bg-white/80 backdrop-blur-xl border border-white/40 shadow-xl p-8">
                     {{ $slot }}
                 </div>
             </div>

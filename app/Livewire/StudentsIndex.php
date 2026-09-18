@@ -39,7 +39,7 @@ class StudentsIndex extends Component
             ]);
             
             \Flux\Flux::modal('edit-student-modal')->close();
-            flux()->toast(
+            \Flux\Flux::toast(
                 text: 'Data siswa berhasil diperbarui.',
                 heading: 'Tersimpan',
                 variant: 'success',
