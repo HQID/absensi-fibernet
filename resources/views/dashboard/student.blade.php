@@ -11,6 +11,34 @@
             </p>
         </div>
 
+        <div class="grid grid-cols-1 gap-6 mb-6">
+            <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between">
+                <div class="text-center sm:text-left mb-4 sm:mb-0">
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Waktu Saat Ini</p>
+                    <div x-data="{ time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }" 
+                         x-init="setInterval(() => time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }), 1000)" 
+                         class="text-4xl font-bold text-gray-900" x-text="time">
+                    </div>
+                    <p class="text-sm text-gray-500 mt-1">{{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}</p>
+                </div>
+                
+                <div class="text-center sm:text-right">
+                    <p class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Status Hari Ini</p>
+                    @if($todayAttendance)
+                        @if($todayAttendance->status === 'present')
+                            <span class="inline-flex items-center rounded-md bg-green-100 px-3 py-1.5 text-sm font-semibold text-green-800 ring-1 ring-inset ring-green-600/20">HADIR</span>
+                        @elseif($todayAttendance->status === 'late')
+                            <span class="inline-flex items-center rounded-md bg-yellow-100 px-3 py-1.5 text-sm font-semibold text-yellow-800 ring-1 ring-inset ring-yellow-600/20">TERLAMBAT</span>
+                        @else
+                            <span class="inline-flex items-center rounded-md bg-red-100 px-3 py-1.5 text-sm font-semibold text-red-800 ring-1 ring-inset ring-red-600/20">ALPA / TIDAK HADIR</span>
+                        @endif
+                    @else
+                        <span class="inline-flex items-center rounded-md bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-800 ring-1 ring-inset ring-gray-600/20">BELUM PRESENSI</span>
+                    @endif
+                </div>
+            </div>
+        </div>
+
         <div class="grid gap-6 md:grid-cols-3">
             <div class="md:col-span-1">
                 <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm mb-6">

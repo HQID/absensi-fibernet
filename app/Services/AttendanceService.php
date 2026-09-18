@@ -21,17 +21,22 @@ class AttendanceService
     /**
      * Handle student check-in
      */
-    public function checkIn(Student $student, float $latitude, float $longitude, float $accuracy, UploadedFile $photo)
+    public function checkIn(Student $student, float $latitude, float $longitude, float $accuracy, UploadedFile $photo, string $locationType = 'inside', string $reason = '')
     {
         $office = OfficeLocation::where('active', true)->first();
         if (!$office) {
             throw new \Exception('Lokasi kantor aktif tidak ditemukan.');
         }
 
-        // Validate Geofence
-        $validation = $this->geofenceService->validateLocation($latitude, $longitude, $accuracy, $office);
-        if (!$validation['valid']) {
-            throw new \Exception($validation['message']);
+        $distance = 0;
+        
+        // Validate Geofence only if location is inside
+        if ($locationType === 'inside') {
+            $validation = $this->geofenceService->validateLocation($latitude, $longitude, $accuracy, $office);
+            if (!$validation['valid']) {
+                throw new \Exception($validation['message']);
+            }
+            $distance = $validation['distance'];
         }
 
         // Block if after 17:00
@@ -64,9 +69,12 @@ class AttendanceService
             'check_in_latitude' => $latitude,
             'check_in_longitude' => $longitude,
             'check_in_accuracy' => $accuracy,
-            'check_in_distance' => $validation['distance'],
+            'check_in_distance' => $locationType === 'inside' ? $distance : null,
             'check_in_photo_path' => $path,
             'status' => $status,
+            'location_type' => $locationType,
+            'reason' => $reason ?: null,
+            'is_approved' => ($locationType === 'outside' || $status === 'late') ? false : true,
         ]);
     }
 
@@ -78,12 +86,6 @@ class AttendanceService
         $office = OfficeLocation::where('active', true)->first();
         if (!$office) {
             throw new \Exception('Lokasi kantor aktif tidak ditemukan.');
-        }
-
-        // Validate Geofence
-        $validation = $this->geofenceService->validateLocation($latitude, $longitude, $accuracy, $office);
-        if (!$validation['valid']) {
-            throw new \Exception($validation['message']);
         }
 
         $today = Carbon::today();
@@ -99,12 +101,23 @@ class AttendanceService
             throw new \Exception('Anda sudah melakukan check-out hari ini.');
         }
 
+        $distance = null;
+
+        // Validate Geofence only if location type is inside
+        if ($attendance->location_type === 'inside') {
+            $validation = $this->geofenceService->validateLocation($latitude, $longitude, $accuracy, $office);
+            if (!$validation['valid']) {
+                throw new \Exception($validation['message']);
+            }
+            $distance = $validation['distance'];
+        }
+
         $attendance->update([
             'check_out_at' => now(),
             'check_out_latitude' => $latitude,
             'check_out_longitude' => $longitude,
             'check_out_accuracy' => $accuracy,
-            'check_out_distance' => $validation['distance'],
+            'check_out_distance' => $distance,
         ]);
 
         return $attendance;
@@ -115,8 +128,8 @@ class AttendanceService
      */
     protected function determineStatus(\Carbon\CarbonInterface $time): string
     {
-        // 08:00 - 09:00 is Present, after 09:00 is Late
-        $limit = Carbon::today()->setHour(9)->setMinute(0)->setSecond(0);
+        // 08:00 - 08:15 is Present, after 08:15 is Late
+        $limit = Carbon::today()->setHour(8)->setMinute(15)->setSecond(0);
         
         return $time->lte($limit) ? 'present' : 'late';
     }

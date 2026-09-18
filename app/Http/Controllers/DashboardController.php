@@ -44,13 +44,19 @@ class DashboardController extends Controller
     {
         $student = $user->student;
         $attendances = collect();
+        $todayAttendance = null;
+        
         if ($student) {
             $attendances = Attendance::where('student_id', $student->id)
                 ->orderBy('attendance_date', 'desc')
                 ->take(10)
                 ->get();
+                
+            $todayAttendance = Attendance::where('student_id', $student->id)
+                ->where('attendance_date', Carbon::today()->toDateString())
+                ->first();
         }
         
-        return view('dashboard.student', compact('attendances', 'student'));
+        return view('dashboard.student', compact('attendances', 'student', 'todayAttendance'));
     }
 }

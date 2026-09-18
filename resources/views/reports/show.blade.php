@@ -55,10 +55,62 @@
                     <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Status</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 uppercase font-semibold
-                            {{ $attendance->status === 'present' ? 'text-green-600' : ($attendance->status === 'late' ? 'text-yellow-600' : 'text-red-600') }}">
-                            {{ $attendance->status }}
+                            {{ $attendance->is_approved === false ? 'text-yellow-600' : ($attendance->status === 'present' ? 'text-green-600' : ($attendance->status === 'late' ? 'text-orange-600' : 'text-red-600')) }}">
+                            {{ $attendance->is_approved === false ? 'PENDING' : $attendance->status }}
                         </dd>
                     </div>
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Kategori Persetujuan</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 font-medium">
+                            @if($attendance->location_type === 'outside')
+                                <span class="text-blue-600">Di Luar Kantor (Kunjungan/Dinas)</span>
+                            @else
+                                <span>Di Dalam Kantor</span>
+                            @endif
+
+                            @if($attendance->is_approved === false)
+                                <span class="ml-2 inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20">Pending Approval</span>
+                            @elseif($attendance->is_approved === true)
+                                <span class="ml-2 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">Approved</span>
+                            @endif
+                        </dd>
+                    </div>
+
+                    @if($attendance->is_approved === false)
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 bg-yellow-50/50">
+                        <dt class="text-sm font-medium text-gray-500 flex items-center">Aksi Persetujuan</dt>
+                        <dd class="mt-1 sm:col-span-2 sm:mt-0 flex flex-wrap gap-2">
+                            <form method="POST" action="{{ route('reports.approve', $attendance->id) }}" class="inline-block">
+                                @csrf
+                                <input type="hidden" name="status" value="present">
+                                <flux:button type="submit" variant="primary" size="sm">
+                                    Terima (Hadir)
+                                </flux:button>
+                            </form>
+                            <form method="POST" action="{{ route('reports.approve', $attendance->id) }}" class="inline-block">
+                                @csrf
+                                <input type="hidden" name="status" value="late">
+                                <flux:button type="submit" size="sm">
+                                    Terima (Terlambat)
+                                </flux:button>
+                            </form>
+                            <form method="POST" action="{{ route('reports.approve', $attendance->id) }}" class="inline-block">
+                                @csrf
+                                <input type="hidden" name="status" value="absent">
+                                <flux:button type="submit" variant="danger" size="sm">
+                                    Tolak (Alpa)
+                                </flux:button>
+                            </form>
+                        </dd>
+                    </div>
+                    @endif
+
+                    @if($attendance->reason)
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                        <dt class="text-sm font-medium text-gray-500">Keterangan / Alasan</dt>
+                        <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 italic">"{{ $attendance->reason }}"</dd>
+                    </div>
+                    @endif
                     
                     <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Waktu Check-In</dt>
@@ -71,10 +123,13 @@
                     <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Lokasi Check-In</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 space-y-1">
-                            <div>Latitude: {{ $attendance->check_in_latitude }}</div>
-                            <div>Longitude: {{ $attendance->check_in_longitude }}</div>
+                            <div>
+                                Koordinat: <a href="https://maps.google.com/?q={{ $attendance->check_in_latitude }},{{ $attendance->check_in_longitude }}" target="_blank" class="text-blue-600 hover:underline">
+                                    {{ $attendance->check_in_latitude }}, {{ $attendance->check_in_longitude }}
+                                </a>
+                            </div>
                             <div>Akurasi GPS: {{ $attendance->check_in_accuracy }} m</div>
-                            <div>Jarak ke Kantor: {{ $attendance->check_in_distance }} m</div>
+                            <div>Jarak ke Kantor: {{ $attendance->check_in_distance ?? '-' }} m</div>
                         </dd>
                     </div>
                     @endif
@@ -101,13 +156,27 @@
                     <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-sm font-medium text-gray-500">Lokasi Check-Out</dt>
                         <dd class="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0 space-y-1">
-                            <div>Latitude: {{ $attendance->check_out_latitude }}</div>
-                            <div>Longitude: {{ $attendance->check_out_longitude }}</div>
+                            <div>
+                                Koordinat: <a href="https://maps.google.com/?q={{ $attendance->check_out_latitude }},{{ $attendance->check_out_longitude }}" target="_blank" class="text-blue-600 hover:underline">
+                                    {{ $attendance->check_out_latitude }}, {{ $attendance->check_out_longitude }}
+                                </a>
+                            </div>
                             <div>Akurasi GPS: {{ $attendance->check_out_accuracy }} m</div>
-                            <div>Jarak ke Kantor: {{ $attendance->check_out_distance }} m</div>
+                            <div>Jarak ke Kantor: {{ $attendance->check_out_distance ?? '-' }} m</div>
                         </dd>
                     </div>
                     @endif
+
+                    <div class="py-4 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 bg-gray-50">
+                        <dt class="text-sm font-medium text-gray-900">Total Waktu Kerja</dt>
+                        <dd class="mt-1 text-sm font-semibold text-gray-900 sm:col-span-2 sm:mt-0">
+                            @if($attendance->check_in_at && $attendance->check_out_at)
+                                {{ $attendance->check_in_at->diff($attendance->check_out_at)->format('%h Jam %i Menit') }}
+                            @else
+                                <span class="text-gray-400">Belum Check-Out</span>
+                            @endif
+                        </dd>
+                    </div>
                 </dl>
             </div>
         </div>

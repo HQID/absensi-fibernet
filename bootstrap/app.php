@@ -20,6 +20,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'student_active' => \App\Http\Middleware\CheckStudentActive::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

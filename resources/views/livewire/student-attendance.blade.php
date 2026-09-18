@@ -15,6 +15,10 @@ new class extends Component
     public $longitude;
     public $accuracy;
     public $photo;
+    
+    public $locationType = 'inside';
+    public $reason = '';
+    public $isLate = false;
 
     public $attendanceToday;
     public $errorMessage = '';
@@ -23,6 +27,7 @@ new class extends Component
     public function mount()
     {
         $this->loadAttendance();
+        $this->isLate = now()->format('H:i') > '08:15';
     }
 
     public function with(): array
@@ -57,15 +62,23 @@ new class extends Component
             'latitude' => 'required',
             'longitude' => 'required',
             'accuracy' => 'required',
-            'photo' => 'required|image|max:5120', // 5MB max
+            'photo' => 'required|image|max:20480', // 20MB max
+            'locationType' => 'required|in:inside,outside',
         ]);
+
+        $isLate = now()->format('H:i') > '08:15';
+        if ($this->locationType === 'outside' || $isLate) {
+            $this->validate(['reason' => 'required|string|min:3'], [
+                'reason.required' => 'Keterangan/Alasan wajib diisi (karena Anda memilih Luar Kantor atau terlambat).'
+            ]);
+        }
 
         $this->errorMessage = '';
         $this->successMessage = '';
         
         try {
             $student = Auth::user()->student;
-            $attendanceService->checkIn($student, $this->latitude, $this->longitude, $this->accuracy, $this->photo);
+            $attendanceService->checkIn($student, $this->latitude, $this->longitude, $this->accuracy, $this->photo, $this->locationType, $this->reason);
             $this->successMessage = 'Check-in berhasil!';
             $this->photo = null;
             $this->loadAttendance();
@@ -98,7 +111,7 @@ new class extends Component
 ?>
 
 <div>
-    <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div class="rounded-xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
         @if(Auth::user()->isStudent() && Auth::user()->student)
             
             @if($errorMessage)
@@ -120,8 +133,8 @@ new class extends Component
                     <h2 class="text-lg font-medium text-gray-900 mb-4">Check In Presensi</h2>
                     
                     <div x-show="!locationReady" class="mb-4">
-                        <button type="button" @click="getLocation()" class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
-                            1. Dapatkan Lokasi Saya
+                        <button type="button" @click="getLocation()" class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors w-full sm:w-auto">
+                            Dapatkan Lokasi Saya
                         </button>
                     </div>
 
@@ -132,7 +145,23 @@ new class extends Component
                         </div>
 
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-1">2. Foto Bukti Kehadiran</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Lokasi Presensi</label>
+                            <select wire:model.live="locationType" class="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-blue-500 focus:outline-none focus:ring-blue-500 sm:text-sm">
+                                <option value="inside">Di Dalam Kantor</option>
+                                <option value="outside">Di Luar Kantor (Kunjungan/Dinas)</option>
+                            </select>
+                            @error('locationType') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div x-show="$wire.locationType === 'outside' || $wire.isLate" class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Keterangan / Alasan <span class="text-red-500">*</span></label>
+                            <p class="text-xs text-gray-500 mb-2">Wajib diisi karena Anda memilih Luar Kantor atau Anda datang terlambat.</p>
+                            <textarea wire:model="reason" rows="2" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Masukkan alasan Anda..."></textarea>
+                            @error('reason') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Foto Bukti Kehadiran</label>
                             <input type="file" wire:model="photo" accept="image/*" capture="user" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                             @error('photo') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
@@ -142,8 +171,8 @@ new class extends Component
                         </div>
 
                         <div x-show="$wire.photo" style="display: none;">
-                            <button type="button" wire:click="checkIn" wire:loading.attr="disabled" class="w-full rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors flex justify-center">
-                                <span wire:loading.remove wire:target="checkIn">3. Submit Check In</span>
+                            <button type="button" wire:click="checkIn" wire:loading.attr="disabled" class="w-full rounded-lg bg-green-600 px-5 py-3 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 transition-colors flex justify-center shadow-sm">
+                                <span wire:loading.remove wire:target="checkIn">Submit Check In</span>
                                 <span wire:loading wire:target="checkIn">Menyimpan...</span>
                             </button>
                         </div>
@@ -164,8 +193,8 @@ new class extends Component
                     </div>
 
                     <div x-show="!locationReady" class="mb-4">
-                        <button type="button" @click="getLocation()" class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
-                            1. Dapatkan Lokasi Saya
+                        <button type="button" @click="getLocation()" class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors w-full sm:w-auto">
+                            Dapatkan Lokasi Saya
                         </button>
                     </div>
 
@@ -175,8 +204,8 @@ new class extends Component
                             Lokasi terverifikasi (Akurasi: <span x-text="Math.round(accuracy)" class="mx-1 font-semibold"></span>m)
                         </div>
 
-                        <button type="button" wire:click="checkOut" wire:loading.attr="disabled" class="w-full rounded-lg bg-orange-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50 transition-colors flex justify-center">
-                            <span wire:loading.remove wire:target="checkOut">2. Submit Check Out</span>
+                        <button type="button" wire:click="checkOut" wire:loading.attr="disabled" class="w-full rounded-lg bg-orange-600 px-5 py-3 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50 transition-colors flex justify-center shadow-sm">
+                            <span wire:loading.remove wire:target="checkOut">Submit Check Out</span>
                             <span wire:loading wire:target="checkOut">Menyimpan...</span>
                         </button>
                     </div>
@@ -257,42 +286,44 @@ new class extends Component
 
     @if(Auth::user()->isStudent() && Auth::user()->student)
     <div class="mt-8 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200">
+        <div class="px-4 py-4 sm:px-6 sm:py-5 border-b border-gray-200">
             <h3 class="text-lg font-medium leading-6 text-gray-900">Riwayat Presensi Saya</h3>
         </div>
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-gray-500">
+            <table class="min-w-full text-left text-sm text-gray-500">
                 <thead class="bg-gray-50 text-xs uppercase text-gray-700 border-b border-gray-200">
                     <tr>
-                        <th scope="col" class="px-6 py-3">Tanggal</th>
-                        <th scope="col" class="px-6 py-3">Check In</th>
-                        <th scope="col" class="px-6 py-3">Check Out</th>
-                        <th scope="col" class="px-6 py-3">Status</th>
+                        <th scope="col" class="px-4 py-3 sm:px-6">Tanggal</th>
+                        <th scope="col" class="px-4 py-3 sm:px-6">Check In</th>
+                        <th scope="col" class="px-4 py-3 sm:px-6">Check Out</th>
+                        <th scope="col" class="px-4 py-3 sm:px-6">Status</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
                     @forelse($history as $record)
                         <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                                 <div class="font-medium text-gray-900">{{ $record->attendance_date->format('d M Y') }}</div>
                                 <div class="text-xs text-gray-500">{{ $record->attendance_date->translatedFormat('l') }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                                 @if($record->check_in_at)
                                     <div class="text-gray-900">{{ $record->check_in_at->format('H:i') }}</div>
                                 @else
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
+                            <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
                                 @if($record->check_out_at)
                                     <div class="text-gray-900">{{ $record->check_out_at->format('H:i') }}</div>
                                 @else
                                     <span class="text-gray-400">-</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($record->status === 'present')
+                            <td class="px-4 py-3 sm:px-6 sm:py-4 whitespace-nowrap">
+                                @if($record->is_approved === false)
+                                    <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20 uppercase">PENDING</span>
+                                @elseif($record->status === 'present')
                                     <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20 uppercase">HADIR</span>
                                 @elseif($record->status === 'late')
                                     <span class="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800 ring-1 ring-inset ring-yellow-600/20 uppercase">TERLAMBAT</span>
