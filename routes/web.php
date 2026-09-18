@@ -13,18 +13,17 @@ Route::middleware('auth')->group(function () {
 
     Route::view('/attendance', 'attendance.index')
         ->name('attendance');
-
-    Route::view('/settings/profile', 'settings.index')
-        ->name('profile.edit');
 });
 
-Route::view('/students', 'students.index')
-    ->name('students');
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/students', function () {
+        return view('students.index', [
+            'students' => \App\Models\Student::with('user')->latest()->paginate(10)
+        ]);
+    })->name('students');
 
-Route::middleware(['auth'])->group(function () {
     Route::get('/reports', [App\Http\Controllers\ReportController::class, 'index'])->name('reports');
     Route::get('/reports/export', [App\Http\Controllers\ReportController::class, 'export'])->name('reports.export');
+    Route::get('/reports/{attendance}', [App\Http\Controllers\ReportController::class, 'show'])->name('reports.show');
+    Route::get('/reports/{attendance}/photo', [App\Http\Controllers\ReportController::class, 'photo'])->name('reports.photo');
 });
-
-Route::view('/settings', 'settings.index')
-    ->name('settings');

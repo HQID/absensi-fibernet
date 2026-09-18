@@ -22,7 +22,7 @@ class AttendanceReportService implements FromCollection, WithHeadings, WithMappi
         $this->endDate = $endDate;
     }
 
-    public function collection()
+    public function collection(): \Illuminate\Support\Enumerable
     {
         $query = Attendance::with(['student.user']);
 
@@ -67,7 +67,7 @@ class AttendanceReportService implements FromCollection, WithHeadings, WithMappi
         ];
     }
 
-    public function styles(Worksheet $sheet)
+    public function styles(Worksheet $sheet): ?array
     {
         return [
             1 => ['font' => ['bold' => true]],

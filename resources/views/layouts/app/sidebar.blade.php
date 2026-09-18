@@ -15,12 +15,21 @@
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
+                    
+                    @if(auth()->user()->isStudent())
                     <flux:sidebar.item icon="calendar" :href="route('attendance')" :current="request()->routeIs('attendance')" wire:navigate>
                         {{ __('Attendance') }}
                     </flux:sidebar.item>
+                    @endif
+
+                    @if(auth()->user()->isAdmin())
                     <flux:sidebar.item icon="document-text" :href="route('reports')" :current="request()->routeIs('reports')" wire:navigate>
                         {{ __('Reports') }}
                     </flux:sidebar.item>
+                    <flux:sidebar.item icon="users" :href="route('students')" :current="request()->routeIs('students')" wire:navigate>
+                        {{ __('Peserta PKL') }}
+                    </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
             </flux:sidebar.nav>
 
@@ -64,7 +73,7 @@
 
                     <flux:menu.radio.group>
                         <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
+                            Profil
                         </flux:menu.item>
                     </flux:menu.radio.group>
 

@@ -30,6 +30,56 @@
                 placeholder="email@example.com"
             />
 
+            <!-- Student Code (NIM/NISN) -->
+            <flux:input
+                name="student_code"
+                :label="__('NIM / NISN')"
+                :value="old('student_code')"
+                type="text"
+                required
+                placeholder="Nomor Induk Mahasiswa / Siswa"
+            />
+
+            <!-- School/University -->
+            <flux:input
+                name="school"
+                :label="__('Asal Sekolah / Kampus')"
+                :value="old('school')"
+                type="text"
+                required
+                placeholder="Contoh: Universitas Tadulako"
+            />
+
+            <!-- Major -->
+            <flux:input
+                name="major"
+                :label="__('Jurusan')"
+                :value="old('major')"
+                type="text"
+                required
+                placeholder="Contoh: Teknik Informatika"
+            />
+
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Start Date -->
+                <flux:input
+                    name="start_date"
+                    :label="__('Tanggal Mulai PKL')"
+                    :value="old('start_date')"
+                    type="date"
+                    required
+                />
+                
+                <!-- End Date -->
+                <flux:input
+                    name="end_date"
+                    :label="__('Tanggal Selesai PKL')"
+                    :value="old('end_date')"
+                    type="date"
+                    required
+                />
+            </div>
+
             <!-- Password -->
             <flux:input
                 name="password"
