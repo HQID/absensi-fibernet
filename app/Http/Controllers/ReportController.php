@@ -63,6 +63,20 @@ class ReportController extends Controller
         return response()->file(\Illuminate\Support\Facades\Storage::disk('local')->path($attendance->check_in_photo_path));
     }
 
+    public function approve(Request $request, Attendance $attendance)
+    {
+        $request->validate([
+            'status' => 'required|in:present,late,absent'
+        ]);
+
+        $attendance->update([
+            'status' => $request->status,
+            'is_approved' => true
+        ]);
+
+        return back()->with('success', 'Status presensi berhasil diubah dan disetujui.');
+    }
+
     protected function syncAbsentees($startDate, $endDate)
     {
         $students = \App\Models\Student::where('status', 'active')->get();
