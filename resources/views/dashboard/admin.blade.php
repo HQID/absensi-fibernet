@@ -9,7 +9,7 @@
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">
-                        Dashboard Attendance
+                        Dashboard Presensi
                     </h1>
                     <p class="text-sm text-gray-500">
                         Monitoring presensi peserta PKL PT Fiber Networks Indonesia Branch Palu.

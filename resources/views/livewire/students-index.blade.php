@@ -1,9 +1,14 @@
 <div class="space-y-6">
         <div class="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
             <div class="sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Peserta PKL</h1>
-                    <p class="mt-1 text-sm text-gray-500">Kelola masa periode PKL dan status aktif siswa.</p>
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-cyan-50 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">Peserta PKL</h1>
+                        <p class="text-sm text-gray-500">Kelola masa periode PKL dan status aktif siswa.</p>
+                    </div>
                 </div>
             </div>
         </div>

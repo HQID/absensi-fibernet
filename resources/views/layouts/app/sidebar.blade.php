@@ -10,8 +10,8 @@
                 <flux:sidebar.collapse class="lg:hidden text-slate-400 hover:text-white" />
             </flux:sidebar.header>
 
-            <flux:sidebar.nav>
-                <flux:sidebar.group class="grid">
+            <flux:sidebar.nav class="mt-6">
+                <flux:sidebar.group class="grid gap-1">
                     <flux:sidebar.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
@@ -39,8 +39,8 @@
             <div class="px-4 py-3 mb-2">
                 <div class="rounded-lg bg-slate-800/50 border border-slate-700/50 px-3 py-2.5">
                     <div class="flex items-center gap-2">
-                        <div class="h-2 w-2 rounded-full bg-cyan-500 animate-pulse"></div>
-                        <span class="text-xs text-slate-400">Fiber Networks Indonesia</span>
+                        <div class="h-2 w-2 shrink-0 rounded-full bg-cyan-500 animate-pulse"></div>
+                        <span class="text-[11px] leading-tight text-slate-300 font-medium">PT Fiber Networks Indonesia Branch Palu</span>
                     </div>
                 </div>
             </div>

@@ -206,7 +206,17 @@ select:focus[data-flux-control] {
 
 .fibernet-sidebar [data-flux-sidebar-item] {
     @apply text-slate-200 rounded-lg;
+    height: 2.75rem !important;
     transition: all 0.15s;
+}
+
+.fibernet-sidebar [data-flux-sidebar-item] div[data-content] {
+    font-size: 0.95rem !important;
+}
+
+.fibernet-sidebar [data-flux-sidebar-item] svg {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
 }
 
 .fibernet-sidebar [data-flux-sidebar-item]:hover {
