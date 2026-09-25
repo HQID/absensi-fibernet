@@ -7,6 +7,8 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');
 
+Route::view('/offline', 'offline')->name('offline');
+
 Route::middleware(['auth', 'student_active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
