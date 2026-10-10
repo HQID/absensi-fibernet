@@ -22,6 +22,9 @@ class Attendance extends Model
         'check_out_accuracy' => 'decimal:2',
         'check_out_distance' => 'decimal:2',
         'is_approved' => 'boolean',
+        'is_inside_polygon' => 'boolean',
+        'liveness_verified' => 'boolean',
+        'liveness_verified_at' => 'datetime',
     ];
 
     public function student(): BelongsTo

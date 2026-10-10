@@ -21,14 +21,25 @@ class AttendanceService
     /**
      * Handle student check-in
      */
-    public function checkIn(Student $student, float $latitude, float $longitude, float $accuracy, UploadedFile $photo, string $locationType = 'inside', string $reason = '')
-    {
+    public function checkIn(
+        Student $student,
+        float $latitude,
+        float $longitude,
+        float $accuracy,
+        UploadedFile $photo,
+        string $locationType = 'inside',
+        string $reason = '',
+        bool $livenessVerified = false,
+        ?string $livenessMethod = null
+    ) {
         $office = OfficeLocation::where('active', true)->first();
         if (!$office) {
             throw new \Exception('Lokasi kantor aktif tidak ditemukan.');
         }
 
         $distance = 0;
+        $isInsidePolygon = false;
+        $verificationStatus = 'unverified';
         
         // Validate Geofence only if location is inside
         if ($locationType === 'inside') {
@@ -37,6 +48,10 @@ class AttendanceService
                 throw new \Exception($validation['message']);
             }
             $distance = $validation['distance'];
+            $isInsidePolygon = $validation['is_inside_polygon'] ?? false;
+            $verificationStatus = $validation['method'] ?? 'verified';
+        } else {
+            $verificationStatus = 'outside_duty';
         }
 
         // Block if after 17:00
@@ -70,6 +85,11 @@ class AttendanceService
             'check_in_longitude' => $longitude,
             'check_in_accuracy' => $accuracy,
             'check_in_distance' => $locationType === 'inside' ? $distance : null,
+            'is_inside_polygon' => $isInsidePolygon,
+            'location_verification_status' => $verificationStatus,
+            'liveness_verified' => $livenessVerified,
+            'liveness_method' => $livenessMethod,
+            'liveness_verified_at' => $livenessVerified ? now() : null,
             'check_in_photo_path' => $path,
             'status' => $status,
             'location_type' => $locationType,
