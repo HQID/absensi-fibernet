@@ -178,16 +178,21 @@ new class extends Component
 
                         <div class="mb-4">
                             <label class="block text-sm font-medium text-gray-700 mb-1">Foto Bukti Kehadiran</label>
-                            <input type="file" wire:model="photo" accept="image/*" capture="user" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 transition-colors" />
+                            <input type="file" @change="compressAndUpload($event)" accept="image/*" capture="user" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100 transition-colors" />
                             @error('photo') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
 
-                        <div wire:loading wire:target="photo" class="text-sm text-cyan-600 mb-4 flex items-center justify-center gap-2">
+                        <div x-show="uploading" style="display: none;" class="text-sm text-cyan-600 mb-4 flex items-center justify-center gap-2">
                             <svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
-                            Sedang memproses foto...
+                            Sedang memproses & mengompres foto...
                         </div>
 
-                        <div x-show="$wire.photo" style="display: none;">
+                        <div x-show="photoPreview && !uploading" style="display: none;" class="mb-4 flex flex-col items-center">
+                            <img :src="photoPreview" class="h-44 w-auto rounded-xl object-cover shadow-sm border border-gray-200" alt="Preview Presensi" />
+                            <span class="text-xs text-gray-500 mt-2 font-medium" x-text="photoSizeInfo"></span>
+                        </div>
+
+                        <div x-show="$wire.photo && !uploading" style="display: none;">
                             <button type="button" wire:click="checkIn" wire:loading.attr="disabled" class="w-full rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors px-5 py-3 text-sm font-semibold disabled:opacity-50 flex justify-center items-center gap-2">
                                 <span wire:loading.remove wire:target="checkIn">
                                     <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -279,6 +284,9 @@ new class extends Component
                             latitude: null,
                             longitude: null,
                             accuracy: null,
+                            uploading: false,
+                            photoPreview: null,
+                            photoSizeInfo: '',
                             
                             getLocation() {
                                 if (navigator.geolocation) {
@@ -305,6 +313,81 @@ new class extends Component
                                 } else {
                                     alert('Browser Anda tidak mendukung Geolocation.');
                                 }
+                            },
+
+                            compressAndUpload(event) {
+                                const file = event.target.files[0];
+                                if (!file) return;
+
+                                this.uploading = true;
+                                this.photoPreview = null;
+                                this.photoSizeInfo = '';
+
+                                const reader = new FileReader();
+                                reader.onload = (e) => {
+                                    const img = new Image();
+                                    img.onload = () => {
+                                        const MAX_WIDTH = 1280;
+                                        const MAX_HEIGHT = 1280;
+                                        let width = img.width;
+                                        let height = img.height;
+
+                                        if (width > MAX_WIDTH || height > MAX_HEIGHT) {
+                                            if (width > height) {
+                                                height = Math.round((height * MAX_WIDTH) / width);
+                                                width = MAX_WIDTH;
+                                            } else {
+                                                width = Math.round((width * MAX_HEIGHT) / height);
+                                                height = MAX_HEIGHT;
+                                            }
+                                        }
+
+                                        const canvas = document.createElement('canvas');
+                                        canvas.width = width;
+                                        canvas.height = height;
+
+                                        const ctx = canvas.getContext('2d');
+                                        ctx.drawImage(img, 0, 0, width, height);
+
+                                        canvas.toBlob((blob) => {
+                                            if (!blob) {
+                                                this.uploading = false;
+                                                alert('Gagal mengompres gambar.');
+                                                return;
+                                            }
+
+                                            const origKB = Math.round(file.size / 1024);
+                                            const compKB = Math.round(blob.size / 1024);
+                                            this.photoSizeInfo = `Ukuran foto: ${compKB} KB (dari ${origKB} KB)`;
+                                            this.photoPreview = URL.createObjectURL(blob);
+
+                                            const compressedFile = new File([blob], 'capture_' + Date.now() + '.jpg', {
+                                                type: 'image/jpeg',
+                                                lastModified: Date.now()
+                                            });
+
+                                            @this.upload('photo', compressedFile, 
+                                                () => {
+                                                    this.uploading = false;
+                                                },
+                                                (error) => {
+                                                    this.uploading = false;
+                                                    alert('Upload foto gagal: ' + error);
+                                                }
+                                            );
+                                        }, 'image/jpeg', 0.72);
+                                    };
+                                    img.onerror = () => {
+                                        this.uploading = false;
+                                        alert('Format file bukan gambar yang valid.');
+                                    };
+                                    img.src = e.target.result;
+                                };
+                                reader.onerror = () => {
+                                    this.uploading = false;
+                                    alert('Gagal membaca berkas gambar.');
+                                };
+                                reader.readAsDataURL(file);
                             }
                         }
                     }
