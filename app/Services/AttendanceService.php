@@ -54,10 +54,12 @@ class AttendanceService
             $verificationStatus = 'outside_duty';
         }
 
-        // Block if after 17:00
-        $closingTime = Carbon::today()->setHour(17)->setMinute(0)->setSecond(0);
-        if (now()->greaterThan($closingTime)) {
-            throw new \Exception('Batas waktu presensi hari ini telah berakhir (Pukul 17:00). Anda tercatat sebagai Alpa/Tidak Hadir.');
+        // Block if after 17:00 (enforced in production)
+        if (app()->isProduction()) {
+            $closingTime = Carbon::today()->setHour(17)->setMinute(0)->setSecond(0);
+            if (now()->greaterThan($closingTime)) {
+                throw new \Exception('Batas waktu presensi hari ini telah berakhir (Pukul 17:00). Anda tercatat sebagai Alpa/Tidak Hadir.');
+            }
         }
 
         // Check if already checked in today
