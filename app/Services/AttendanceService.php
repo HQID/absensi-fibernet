@@ -146,9 +146,8 @@ class AttendanceService
         $directory = "attendance/{$year}/{$month}/{$day}";
         $filename = "student_{$student->id}_checkin_" . time() . '.' . $photo->getClientOriginalExtension();
         
-        // Use Laravel Storage, typically 'local' or 'public'
-        // According to PRD, shouldn't be publicly accessible directly, so store in local/private storage
-        return $photo->storeAs($directory, $filename, 'local');
+        $disk = config('filesystems.default', 'local');
+        return $photo->storeAs($directory, $filename, $disk);
     }
 }
 

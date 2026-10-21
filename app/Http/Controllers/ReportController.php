@@ -56,11 +56,22 @@ class ReportController extends Controller
 
     public function photo(Attendance $attendance)
     {
-        if (!$attendance->check_in_photo_path || !\Illuminate\Support\Facades\Storage::disk('local')->exists($attendance->check_in_photo_path)) {
+        if (!$attendance->check_in_photo_path) {
             abort(404);
         }
 
-        return response()->file(\Illuminate\Support\Facades\Storage::disk('local')->path($attendance->check_in_photo_path));
+        $disk = \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'));
+
+        // Cek disk utama lebih dulu; jika tidak ada, fallback ke disk local
+        if (!$disk->exists($attendance->check_in_photo_path)) {
+            if (\Illuminate\Support\Facades\Storage::disk('local')->exists($attendance->check_in_photo_path)) {
+                $disk = \Illuminate\Support\Facades\Storage::disk('local');
+            } else {
+                abort(404);
+            }
+        }
+
+        return $disk->response($attendance->check_in_photo_path);
     }
 
     public function approve(Request $request, Attendance $attendance)
