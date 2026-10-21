@@ -1,22 +1,15 @@
 [variables]
 NIXPACKS_PHP_ROOT_DIR = "/app/public"
+NIXPACKS_PHP_VERSION = "8.4"
 
 [phases.setup]
-nixPkgs = [
-    "php83",
-    "php83Extensions.pdo_mysql",
-    "php83Extensions.gd",
-    "php83Extensions.zip",
-    "php83Extensions.mbstring",
-    "php83Extensions.bcmath",
-    "php83Extensions.curl",
-    "composer",
-    "nodejs_22"
-]
+nixPkgs = ["...", "nodejs_22"]
+
+[phases.install]
+cmds = ["composer install --no-dev --prefer-dist --no-interaction --ignore-platform-reqs"]
 
 [phases.build]
 cmds = [
-    "composer install --no-dev --optimize-autoloader",
     "npm install",
     "npm run build"
 ]
