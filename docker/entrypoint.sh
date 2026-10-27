@@ -14,8 +14,9 @@ php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
 
-# Run database migrations
+# Run database migrations and seeders (firstOrCreate safe)
 php artisan migrate --force || true
+php artisan db:seed --force || true
 
 # Start PHP-FPM in background
 php-fpm -D
