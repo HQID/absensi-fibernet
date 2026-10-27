@@ -57,7 +57,7 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Setup Nginx and Entrypoint script
 COPY docker/nginx.conf /etc/nginx/sites-available/default
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh && chmod +x /usr/local/bin/entrypoint.sh
 
 # Set directory permissions for Laravel storage & cache
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
