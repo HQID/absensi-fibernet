@@ -8,7 +8,8 @@ sed -i "s/PORT_PLACEHOLDER/$PORT/g" /etc/nginx/sites-available/default
 # Generate storage link
 php artisan storage:link --force || true
 
-# Cache configurations, routes, and views
+# Discover packages & cache configurations
+php artisan package:discover --ansi || true
 php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true

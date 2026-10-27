@@ -1,5 +1,14 @@
 # ==========================================
-# Stage 1: Build Frontend Assets (Vite)
+# Stage 1: Composer Dependencies (Vendor)
+# ==========================================
+FROM composer:2 AS vendor
+
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --prefer-dist --optimize-autoloader --no-interaction --ignore-platform-reqs
+
+# ==========================================
+# Stage 2: Build Frontend Assets (Vite & Tailwind v4)
 # ==========================================
 FROM node:22-bookworm-slim AS frontend
 
@@ -7,10 +16,12 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# Copy vendor so Tailwind v4 can resolve Livewire Flux CSS & Blade templates
+COPY --from=vendor /app/vendor ./vendor
 RUN npm run build
 
 # ==========================================
-# Stage 2: Production PHP Application
+# Stage 3: Production PHP Application
 # ==========================================
 FROM php:8.4-fpm-bookworm
 
@@ -40,7 +51,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         pcntl \
         bcmath
 
-# Copy Composer from official Composer image
+# Copy Composer from official image
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
@@ -48,11 +59,11 @@ WORKDIR /var/www/html
 # Copy application source code
 COPY . .
 
-# Copy compiled frontend assets from Stage 1
-COPY --from=frontend /app/public/build ./public/build
+# Copy vendor from Stage 1
+COPY --from=vendor /app/vendor ./vendor
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Copy compiled frontend assets from Stage 2
+COPY --from=frontend /app/public/build ./public/build
 
 # Setup Nginx and Entrypoint script
 COPY docker/nginx.conf /etc/nginx/sites-available/default
