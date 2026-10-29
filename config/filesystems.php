@@ -15,6 +15,8 @@ return [
 
     'default' => env('FILESYSTEM_DISK', 'local'),
 
+    'storage_quota_mb' => (int) env('STORAGE_QUOTA_MB', 1024),
+
     /*
     |--------------------------------------------------------------------------
     | Filesystem Disks

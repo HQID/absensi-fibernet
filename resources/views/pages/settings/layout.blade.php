@@ -5,6 +5,7 @@
             <flux:navlist.item :href="route('security.edit')" wire:navigate>{{ __('Keamanan') }}</flux:navlist.item>
             @if(auth()->user()->isAdmin())
             <flux:navlist.item :href="route('geofence.edit')" wire:navigate>{{ __('Lokasi Kantor') }}</flux:navlist.item>
+            <flux:navlist.item :href="route('storage.edit')" wire:navigate>{{ __('Penyimpanan') }}</flux:navlist.item>
             @endif
         </flux:navlist>
     </div>

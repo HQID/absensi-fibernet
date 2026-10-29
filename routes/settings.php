@@ -17,4 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::livewire('settings/geofence', 'pages::settings.geofence')
         ->name('geofence.edit');
+
+    Route::livewire('settings/storage', 'pages::settings.storage')
+        ->name('storage.edit');
 });

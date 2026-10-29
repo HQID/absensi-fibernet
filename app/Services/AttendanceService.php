@@ -6,8 +6,11 @@ use App\Models\Attendance;
 use App\Models\OfficeLocation;
 use App\Models\Student;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use RuntimeException;
 
 class AttendanceService
 {
@@ -21,19 +24,19 @@ class AttendanceService
     /**
      * Handle student check-in
      */
-    public function checkIn(Student $student, float $latitude, float $longitude, float $accuracy, UploadedFile $photo, string $locationType = 'inside', string $reason = '')
+    public function checkIn(Student $student, float $latitude, float $longitude, float $accuracy, UploadedFile $photo, string $locationType = 'inside', string $reason = ''): Attendance
     {
         $office = OfficeLocation::where('active', true)->first();
-        if (!$office) {
+        if (! $office) {
             throw new \Exception('Lokasi kantor aktif tidak ditemukan.');
         }
 
         $distance = 0;
-        
+
         // Validate Geofence only if location is inside
         if ($locationType === 'inside') {
             $validation = $this->geofenceService->validateLocation($latitude, $longitude, $accuracy, $office);
-            if (!$validation['valid']) {
+            if (! $validation['valid']) {
                 throw new \Exception($validation['message']);
             }
             $distance = $validation['distance'];
@@ -47,8 +50,10 @@ class AttendanceService
 
         // Check if already checked in today
         $today = Carbon::today();
+        $todayDate = $today->toDateString();
         $attendance = Attendance::where('student_id', $student->id)
-            ->where('attendance_date', $today->toDateString())
+            ->where('attendance_date', '>=', $todayDate)
+            ->where('attendance_date', '<=', $todayDate.' 23:59:59')
             ->first();
 
         if ($attendance && $attendance->check_in_at) {
@@ -81,19 +86,21 @@ class AttendanceService
     /**
      * Handle student check-out
      */
-    public function checkOut(Student $student, float $latitude, float $longitude, float $accuracy)
+    public function checkOut(Student $student, float $latitude, float $longitude, float $accuracy): Attendance
     {
         $office = OfficeLocation::where('active', true)->first();
-        if (!$office) {
+        if (! $office) {
             throw new \Exception('Lokasi kantor aktif tidak ditemukan.');
         }
 
         $today = Carbon::today();
+        $todayDate = $today->toDateString();
         $attendance = Attendance::where('student_id', $student->id)
-            ->where('attendance_date', $today->toDateString())
+            ->where('attendance_date', '>=', $todayDate)
+            ->where('attendance_date', '<=', $todayDate.' 23:59:59')
             ->first();
 
-        if (!$attendance || !$attendance->check_in_at) {
+        if (! $attendance || ! $attendance->check_in_at) {
             throw new \Exception('Anda belum melakukan check-in hari ini.');
         }
 
@@ -106,7 +113,7 @@ class AttendanceService
         // Validate Geofence only if location type is inside
         if ($attendance->location_type === 'inside') {
             $validation = $this->geofenceService->validateLocation($latitude, $longitude, $accuracy, $office);
-            if (!$validation['valid']) {
+            if (! $validation['valid']) {
                 throw new \Exception($validation['message']);
             }
             $distance = $validation['distance'];
@@ -126,11 +133,11 @@ class AttendanceService
     /**
      * Determine attendance status based on time
      */
-    protected function determineStatus(\Carbon\CarbonInterface $time): string
+    protected function determineStatus(CarbonInterface $time): string
     {
         // 08:00 - 08:15 is Present, after 08:15 is Late
         $limit = Carbon::today()->setHour(8)->setMinute(15)->setSecond(0);
-        
+
         return $time->lte($limit) ? 'present' : 'late';
     }
 
@@ -142,12 +149,24 @@ class AttendanceService
         $year = now()->format('Y');
         $month = now()->format('m');
         $day = now()->format('d');
-        
+
         $directory = "attendance/{$year}/{$month}/{$day}";
-        $filename = "student_{$student->id}_checkin_" . time() . '.' . $photo->getClientOriginalExtension();
-        
-        $disk = config('filesystems.default', 'local');
-        return $photo->storeAs($directory, $filename, $disk);
+        $extension = $photo->getClientOriginalExtension() ?: 'jpg';
+        $filename = "student_{$student->id}_checkin_".time().'.'.$extension;
+
+        $disk = (string) config('filesystems.default', 'local');
+        $storedPath = $photo->storeAs($directory, $filename, $disk);
+
+        if (! is_string($storedPath) || $storedPath === '') {
+            throw new RuntimeException('Gagal menyimpan foto presensi ke penyimpanan.');
+        }
+
+        if ($photo instanceof TemporaryUploadedFile) {
+            rescue(static fn () => $photo->delete(), report: false);
+        }
+
+        Cache::forget(StorageUsageService::CACHE_KEY);
+
+        return $storedPath;
     }
 }
-

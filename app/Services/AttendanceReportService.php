@@ -3,35 +3,50 @@
 namespace App\Services;
 
 use App\Models\Attendance;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class AttendanceReportService implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
+class AttendanceReportService implements FromCollection, ShouldAutoSize, WithHeadings, WithMapping, WithStyles
 {
-    protected $startDate;
-    protected $endDate;
+    public function __construct(
+        protected ?string $startDate = null,
+        protected ?string $endDate = null,
+        protected ?string $school = null,
+        protected ?string $status = null,
+        protected int|string|null $studentId = null,
+    ) {}
 
-    public function __construct($startDate = null, $endDate = null)
-    {
-        $this->startDate = $startDate;
-        $this->endDate = $endDate;
-    }
-
-    public function collection(): \Illuminate\Support\Enumerable
+    public function collection(): Enumerable
     {
         $query = Attendance::with(['student.user']);
 
         if ($this->startDate) {
             $query->where('attendance_date', '>=', $this->startDate);
         }
-        
+
         if ($this->endDate) {
-            $query->where('attendance_date', '<=', $this->endDate);
+            $query->where('attendance_date', '<=', $this->endDate.' 23:59:59');
+        }
+
+        if ($this->studentId) {
+            $query->where('student_id', $this->studentId);
+        }
+
+        if ($this->status) {
+            $query->where('status', $this->status);
+        }
+
+        if ($this->school !== null && trim($this->school) !== '') {
+            $normalizedSchool = mb_strtolower(trim($this->school));
+            $query->whereHas('student', function ($q) use ($normalizedSchool) {
+                $q->whereRaw('LOWER(TRIM(school)) = ?', [$normalizedSchool]);
+            });
         }
 
         return $query->orderBy('attendance_date', 'desc')->get();
@@ -49,7 +64,7 @@ class AttendanceReportService implements FromCollection, WithHeadings, WithMappi
             'Jenis Presensi',
             'Status',
             'Jarak (m)',
-            'Akurasi GPS (m)'
+            'Akurasi GPS (m)',
         ];
     }
 
@@ -81,7 +96,7 @@ class AttendanceReportService implements FromCollection, WithHeadings, WithMappi
             $jenis,
             $status,
             $attendance->check_in_distance ?? '-',
-            $attendance->check_in_accuracy ?? '-'
+            $attendance->check_in_accuracy ?? '-',
         ];
     }
 
@@ -94,7 +109,7 @@ class AttendanceReportService implements FromCollection, WithHeadings, WithMappi
                     'color' => ['argb' => 'FFFFFFFF'],
                 ],
                 'fill' => [
-                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'fillType' => Fill::FILL_SOLID,
                     'startColor' => [
                         'argb' => 'FF0891B2', // Cyan 600
                     ],
@@ -103,4 +118,3 @@ class AttendanceReportService implements FromCollection, WithHeadings, WithMappi
         ];
     }
 }
-

@@ -265,3 +265,56 @@ select:focus[data-flux-control] {
             transparent 50%
         );
 }
+
+/* ========================================
+   Global Website & PWA Loading Indicators
+   ======================================== */
+.fibernet-top-bar-wrap {
+    position: fixed;
+    top: env(safe-area-inset-top, 0px);
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    pointer-events: none;
+}
+
+.fibernet-top-bar {
+    height: 3px;
+    width: 0%;
+    background: linear-gradient(90deg, #2563eb 0%, #06b6d4 55%, #22d3ee 100%);
+    box-shadow: 0 0 10px rgba(6, 182, 212, 0.65);
+    transition: width 220ms ease-out, opacity 200ms ease;
+    opacity: 0;
+}
+
+.fibernet-top-pill {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
+    left: 50%;
+    transform: translate(-50%, -0.5rem);
+    z-index: 9998;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.fibernet-top-pill[data-active="true"] {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.fibernet-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.fibernet-overlay[data-active="true"] {
+    display: flex;
+}

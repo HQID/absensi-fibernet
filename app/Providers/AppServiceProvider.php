@@ -38,5 +38,9 @@ class AppServiceProvider extends ServiceProvider
         );
 
         Password::defaults(fn (): Password => Password::min(8));
+
+        config([
+            'livewire.temporary_file_upload.disk' => config('livewire.temporary_file_upload.disk') ?: 'local',
+        ]);
     }
 }
