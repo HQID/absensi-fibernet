@@ -1,4 +1,4 @@
-name: tests
+name: ci
 
 on:
   push:
@@ -10,29 +10,30 @@ permissions:
   contents: read
 
 jobs:
-  ci:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          php-version: '8.5'
-          tools: composer:v2
-          coverage: none
+          node-version: "22"
+          cache: "npm"
 
-      - name: Setup Node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: '22'
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Setup Application
-        run: composer setup
+      - name: Run ESLint
+        run: npm run lint
 
-      - name: Run CI Checks
-        run: composer ci:check
+      - name: Build production bundle
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_placeholder' }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY || 'sb_secret_placeholder' }}
+        run: npm run build

@@ -1,86 +1,45 @@
-# Absensi PKL Fibernet
+# Sistem Presensi PKL Geofencing — PT Fiber Networks Indonesia Branch Palu
 
-Aplikasi Absensi PKL (Praktik Kerja Lapangan) berbasis *web* yang dikembangkan menggunakan **Laravel 11**, **Livewire 3**, dan **Tailwind CSS 4 (Flux UI)**. Aplikasi ini dirancang khusus untuk memonitor kehadiran siswa/mahasiswa PKL di PT Fiber Networks Indonesia Branch Palu dengan dukungan fitur **Geofencing** (Pembatasan Lokasi) dan PWA (Progressive Web App).
+Aplikasi web presensi Peserta PKL berbasis **Next.js 16 (App Router)**, **React 19**, **Tailwind CSS v4**, **Supabase (PostgreSQL + Auth + Private Storage)**, dan **Vercel Serverless** dengan dukungan penuh **Geofencing Haversine**, kompresi foto di sisi browser (`<canvas>`), dan **PWA**.
 
-## ✨ Fitur Utama
+## Fitur Utama
 
-### 👑 Untuk Administrator
-* **Dashboard Terpusat:** Melihat *timeline* presensi siswa secara *real-time* dan status kehadiran hari ini.
-* **Manajemen Peserta PKL:** Mengelola data siswa PKL (mengubah masa periode aktif PKL dan menonaktifkan siswa yang sudah selesai).
-* **Laporan Presensi (Reports):**
-  * Menyaring ( *filter*) riwayat absensi berdasarkan rentang tanggal, nama siswa, dan status.
-  * Melihat bukti foto *check-in* siswa.
-  * Memvalidasi atau mengubah status kehadiran (Hadir/Terlambat/Absen).
-  * **Export Excel:** Mengunduh rekapitulasi data presensi ke dalam format `.xlsx`.
+- **Peserta PKL (Siswa):**
+  - Presensi **Check-In** & **Check-Out** dengan validasi radius koordinat kantor & batas akurasi GPS.
+  - Mode **Dalam Kantor** & **Luar Kantor** (*Pending Approval* Admin) serta deteksi keterlambatan otomatis (`> 08:15` WITA) dan penutupan presensi (`17:00` WITA).
+  - Kompresi foto selfie langsung di RAM browser (`max 1280px`, JPEG `0.72`) tanpa file sementara.
+  - Dashboard real-time dengan jam digital WITA & instalasi PWA (*Add to Home Screen* + halaman `/offline`).
+- **Administrator:**
+  - Dashboard aktivitas harian & metrik kehadiran real-time.
+  - Laporan presensi (`/reports`) dengan sinkronisasi Alpa hari kerja otomatis, filter rentang tanggal/sekolah/siswa/status, persetujuan presensi 3-pilihan, serta **Export Excel (`.xlsx`)**.
+  - Manajemen Peserta PKL (`/students`): ubah periode/status aktif & **Hapus Permanen 2 Tahap** beserta foto di bucket privat.
+  - Pengaturan Geofence (`/settings/geofence`) & pemantauan kuota + pembersihan sampah **Supabase Storage** (`/settings/storage`).
 
-### 👨‍🎓 Untuk Peserta PKL (Siswa)
-* **Presensi Geofencing:** Melakukan *Check In* dan *Check Out* dengan validasi radius jarak (meter) dari titik koordinat kantor. 
-* **Bukti Foto (Selfie):** Mewajibkan pengambilan foto *selfie* secara *real-time* saat melakukan absen.
-* **Dashboard Siswa:** Melihat profil PKL, sisa masa periode, dan riwayat presensi mandiri.
-* **Deteksi Lokasi (Dalam/Luar Kantor):** Sistem otomatis mendeteksi apakah siswa absen dari dalam batas area kantor atau berada di luar area kantor.
+## Menjalankan Secara Lokal
 
-### 📱 Progressive Web App (PWA)
-* Dapat diunduh/di- *install* langsung ke layar utama *smartphone* tanpa melalui Play Store/App Store.
-* Memiliki halaman *Offline Fallback* jika koneksi internet terputus.
-
-## 🚀 Teknologi yang Digunakan
-* **Backend:** Laravel 11.x, PHP 8.2+
-* **Frontend:** Livewire 3, Tailwind CSS v4, Flux UI, Alpine.js
-* **Database:** MySQL
-* **Export:** Laravel Excel (Maatwebsite)
-* **PWA:** Vanilla Service Worker & Web Manifest
-
-## 🛠️ Instalasi & Persiapan
-
-1. **Kloning Repositori**
+1. Salin variabel environment:
    ```bash
-   git clone <repo-url> absensi-fibernet
-   cd absensi-fibernet
+   cp .env.example .env.local
    ```
-
-2. **Install Dependensi PHP & Node.js**
+2. Isi kredensial proyek Supabase pada `.env.local`.
+3. Instal dependensi & jalankan server pengembangan:
    ```bash
-   composer install
    npm install
+   npm run dev
    ```
 
-3. **Konfigurasi Lingkungan (.env)**
-   Salin *file* konfigurasi dan sesuaikan koneksi *database* Anda.
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-   *Atur koneksi DB di dalam file `.env`.*
+## Deploy ke Vercel
 
-4. **Migrasi Database & Seeding**
-   ```bash
-   php artisan migrate:fresh --seed
-   ```
-   *(Catatan: Pastikan Anda telah membuat seeder untuk akun Admin default jika ada).*
-
-5. **Symlink Storage (Untuk Foto Presensi)**
-   ```bash
-   php artisan storage:link
-   ```
-
-6. **Kompilasi Aset Frontend (Vite)**
-   ```bash
-   npm run build
-   ```
-
-7. **Jalankan Server Lokal**
-   ```bash
-   php artisan serve
-   ```
-   Akses aplikasi di `http://localhost:8000`.
-
-## 📍 Pengaturan Geofencing (Koordinat Kantor)
-Untuk mengubah titik kordinat kantor dan batas radius maksimal absen, buka *file* `app/Services/AttendanceService.php` dan sesuaikan variabel berikut:
-```php
-private $officeLat = -0.9008985; // Latitude Kantor
-private $officeLng = 119.8778007; // Longitude Kantor
-private $maxRadius = 100; // Radius toleransi dalam meter
-```
-
-## 📝 Lisensi
-Dibuat untuk keperluan internal **PT Fiber Networks Indonesia Branch Palu**.
+1. Hubungkan repositori GitHub ke **Vercel** (**Root Directory:** `/` default).
+2. Tambahkan **Environment Variables** pada *Vercel Project Settings*:
+   - `NEXT_PUBLIC_APP_NAME` = `Presensi PKL Fibernet`
+   - `NEXT_PUBLIC_APP_URL` = `https://<domain-vercel-anda>.vercel.app`
+   - `APP_TIMEZONE` = `Asia/Makassar`
+   - `NEXT_PUBLIC_SUPABASE_URL` = `https://<project-ref>.supabase.co`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = `sb_publishable_...`
+   - `SUPABASE_SECRET_KEY` = `sb_secret_...`
+   - `SUPABASE_STORAGE_BUCKET` = `photos`
+   - `STORAGE_QUOTA_MB` = `1024`
+3. Pada **Supabase Dashboard → Authentication → URL Configuration**:
+   - **Site URL:** `https://<domain-vercel-anda>.vercel.app`
+   - **Redirect URLs:** `https://<domain-vercel-anda>.vercel.app/api/auth/callback**`

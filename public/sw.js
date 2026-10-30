@@ -2,56 +2,63 @@ const CACHE_NAME = 'fibernet-pwa-cache-v1';
 const OFFLINE_URL = '/offline';
 
 const urlsToCache = [
-    '/',
     OFFLINE_URL,
     '/logo-fibernet.png',
+    '/fibernet.png',
     '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => {
-                return cache.addAll(urlsToCache);
-            })
+        caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
     );
 });
 
 self.addEventListener('fetch', (event) => {
-    // Ignore non-GET requests (like POST for login)
     if (event.request.method !== 'GET') {
         return;
     }
 
-    if (event.request.mode === 'navigate' || event.request.headers.get('accept').includes('text/html')) {
-        event.respondWith(
-            fetch(event.request).catch(error => {
-                // Return the offline page
-                return caches.match(OFFLINE_URL);
-            })
-        );
-    } else {
-        // For non-HTML requests, use cache-first strategy
-        event.respondWith(
-            caches.match(event.request).then((response) => {
-                return response || fetch(event.request);
-            })
-        );
+    const url = new URL(event.request.url);
+    if (url.origin !== self.location.origin) {
+        return;
     }
+
+    // Never cache authenticated API streams, XLSX exports, or Next RSC payloads
+    if (
+        url.pathname.startsWith('/api/') ||
+        url.pathname.startsWith('/_next/data/') ||
+        event.request.headers.get('rsc') === '1'
+    ) {
+        return;
+    }
+
+    const acceptHeader = event.request.headers.get('accept') || '';
+    if (event.request.mode === 'navigate' || acceptHeader.includes('text/html')) {
+        event.respondWith(
+            fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+        );
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request).then((response) => response || fetch(event.request))
+    );
 });
 
 self.addEventListener('activate', (event) => {
     const cacheAllowlist = [CACHE_NAME];
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
+        caches.keys().then((cacheNames) =>
+            Promise.all(
                 cacheNames.map((cacheName) => {
-                    if (cacheAllowlist.indexOf(cacheName) === -1) {
+                    if (!cacheAllowlist.includes(cacheName)) {
                         return caches.delete(cacheName);
                     }
+                    return undefined;
                 })
-            );
-        })
+            )
+        )
     );
 });
