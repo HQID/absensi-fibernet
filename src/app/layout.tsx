@@ -22,8 +22,11 @@ export const metadata: Metadata = {
     "Sistem Presensi PKL Geofencing PT Fiber Networks Indonesia Branch Palu",
   manifest: "/manifest.json",
   icons: {
-    icon: "/favicon.ico",
-    apple: "/logo-fibernet.png",
+    icon: [
+      { url: "/logo-fibernet.png?v=2", type: "image/png" },
+      { url: "/favicon.ico?v=2" },
+    ],
+    apple: "/logo-fibernet.png?v=2",
   },
   appleWebApp: {
     capable: true,
